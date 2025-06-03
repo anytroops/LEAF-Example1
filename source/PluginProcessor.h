@@ -1,10 +1,11 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
-
+#include "leaf-global.h"
 #if (MSVC)
 #include "ipps.h"
 #endif
+struct tCycle;
 
 class PluginProcessor : public juce::AudioProcessor
 {
@@ -39,5 +40,10 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
+    LEAF leaf;
+    char leafMemory[65535];
+
+    tCycle* osc;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };

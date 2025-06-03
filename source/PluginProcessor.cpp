@@ -1,6 +1,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-
+#include "leaf.h"
+#include "leaf-oscillators.h"
+static float myrand() {return (float)rand()/RAND_MAX;}
 //==============================================================================
 PluginProcessor::PluginProcessor()
      : AudioProcessor (BusesProperties()
@@ -12,10 +14,16 @@ PluginProcessor::PluginProcessor()
                      #endif
                        )
 {
+    LEAF leaf;
+    LEAF_init(&leaf, 44100.f, leafMemory, 65535, &myrand);
+    tCycle_init(&osc, &leaf);
+    tCycle_setFreq(osc, 440.f);
 }
 
 PluginProcessor::~PluginProcessor()
 {
+    leaf_free(&leaf,leafMemory);
+    tCycle_free(&osc);
 }
 
 //==============================================================================
@@ -143,12 +151,19 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // the samples and the outer loop is handling the channels.
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+
+
+    auto* channelDataL = buffer.getWritePointer (0);
+    auto* channelDataR = buffer.getWritePointer (0);
+
+    for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
     {
-        auto* channelData = buffer.getWritePointer (channel);
-        juce::ignoreUnused (channelData);
-        // ..do something to the data...
+        channelDataL[sample] = tCycle_tick(osc);
+        channelDataR[sample] = channelDataL[sample];
     }
+
+        // ..do something to the data...
+
 }
 
 //==============================================================================
